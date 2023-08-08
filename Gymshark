@@ -1,0 +1,46 @@
+import requests
+from bs4 import BeautifulSoup
+import json
+import csv
+
+url = "https://us.shop.gymshark.com/products/gymshark-crest-sweatshirt-persimmon-red-ss23"
+
+response = requests.get(url)
+
+if response.status_code == 200:
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    product_title = soup.find('h1', class_='product-single__title').text.strip()
+    
+    product_description = soup.find('div', class_='product-single__description').text.strip()
+
+    product_price = soup.find('span', class_='product__price').text.strip()
+
+    available_sizes = []
+    size_options = soup.find_all('label', class_='product-option__label')
+    for option in size_options:
+        size = option.text.strip()
+        available_sizes.append(size)
+    
+    product_data = {
+        "Product Title": product_title,
+        "Product Description": product_description,
+        "Product Price": product_price,
+        "Available Sizes": available_sizes
+    }
+
+    with open("product_data.json", "w") as json_file:
+        json.dump(product_data, json_file, indent=4)
+    print("Data saved to 'product_data.json'")
+
+    csv_headers = ["Product Title", "Product Description", "Product Price", "Available Sizes"]
+    csv_rows = [product_data]
+    
+    with open("product_data.csv", "w", newline="", encoding="utf-8") as csv_file:
+        csv_writer = csv.DictWriter(csv_file, fieldnames=csv_headers)
+        csv_writer.writeheader()
+        csv_writer.writerows(csv_rows)
+    print("Data saved to 'product_data.csv'")
+
+else:
+    print("Failed to retrieve the web page")
